@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard | St. Williams Catholic Church</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand-mark">✦</div>
+        <div>
+          <p class="brand-name">St. Williams</p>
+          <small>Catholic Church</small>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="index.html">Home</a>
+        <a href="login.html">Login</a>
+        <a href="owner.html">Owner</a>
+      </nav>
+
+      <a class="owner-button" href="index.html">Home</a>
+    </header>
+
+    <main class="page-shell">
+      <section class="owner-panel">
+        <div class="owner-header">
+          <h2>Member Dashboard</h2>
+          <a class="btn btn-secondary" href="index.html">Back Home</a>
+        </div>
+
+        <div class="info-grid">
+          <article class="info-box highlight">
+            <p class="box-kicker">Today</p>
+            <h3 id="dashboardDay">Loading...</h3>
+            <p id="dashboardDate">--</p>
+          </article>
+
+          <article class="info-box">
+            <p class="box-kicker">Reading</p>
+            <h3 id="dashboardReadingTitle">--</h3>
+            <p id="dashboardReadingText">--</p>
+          </article>
+
+          <article class="info-box">
+            <p class="box-kicker">Roster</p>
+            <h3 id="dashboardRosterCount">0 readers</h3>
+            <p id="dashboardRoleLabel">Open schedule</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="owner-wrapper">
+        <div class="owner-panel">
+          <div class="owner-header">
+            <h2>Daily Reading Schedule</h2>
+          </div>
+
+          <form id="scheduleForm" class="owner-form hidden">
+            <div class="member-form-grid">
+              <label>
+                Reader Name
+                <input type="text" id="scheduleName" placeholder="Full name" required />
+              </label>
+
+              <label>
+                Role
+                <select id="scheduleRole">
+                  <option value="Reader">Reader</option>
+                  <option value="Lector">Lector</option>
+                  <option value="Commentator">Commentator</option>
+                  <option value="Leader">Leader</option>
+                </select>
+              </label>
+
+              <div class="input-row">
+                <label>
+                  Day
+                  <select id="scheduleDay">
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                  </select>
+                </label>
+
+                <label>
+                  Time
+                  <input type="time" id="scheduleTime" required />
+                </label>
+              </div>
+
+              <div class="input-row">
+                <label>
+                  Date
+                  <input type="number" id="scheduleDate" min="1" max="31" required />
+                </label>
+
+                <label>
+                  Month
+                  <select id="scheduleMonth">
+                    <option value="January">January</option>
+                    <option value="February">February</option>
+                    <option value="March">March</option>
+                    <option value="April">April</option>
+                    <option value="May">May</option>
+                    <option value="June">June</option>
+                    <option value="July">July</option>
+                    <option value="August">August</option>
+                    <option value="September">September</option>
+                    <option value="October">October</option>
+                    <option value="November">November</option>
+                    <option value="December">December</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="owner-actions">
+              <button type="submit" class="btn btn-primary">Add Assignment</button>
+              <button type="button" class="btn btn-secondary" id="clearScheduleForm">Clear</button>
+            </div>
+          </form>
+
+          <p id="scheduleStatus" class="status-message" aria-live="polite"></p>
+        </div>
+
+        <div class="list-panel">
+          <div class="owner-header">
+            <h2>Reader List</h2>
+          </div>
+          <div id="scheduleTable" class="member-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 St. Williams Catholic Church</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

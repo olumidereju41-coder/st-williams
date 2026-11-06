@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>St. Williams Catholic Church</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand-mark">✦</div>
+        <div>
+          <p class="brand-name">St. Williams</p>
+          <small>Catholic Church</small>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="#readings">Readings</a>
+        <a href="login.html">Login</a>
+        <a href="signup.html">Sign Up</a>
+        <a href="owner.html">Owner</a>
+      </nav>
+
+      <a class="owner-button" href="owner.html">Owner Area</a>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Catholic Reading & Prayer</p>
+          <h1>Welcome to St. Williams Catholic Church</h1>
+          <p class="lead">
+            Join our community of worshippers, readers, and faithful servants. Members may log in once approved by the owner.
+          </p>
+          <div class="cta-row">
+            <a class="primary-btn" href="login.html">Login</a>
+            <a class="secondary-btn" href="#readings">View Sunday Readings</a>
+          </div>
+        </div>
+
+        <div class="hero-panel">
+          <div class="date-card">
+            <span class="date-label">Today</span>
+            <h2 id="todayDate">Loading date...</h2>
+            <p id="todayName">Sunday</p>
+          </div>
+
+          <div class="reading-card">
+            <p class="small-label">Sunday Reading</p>
+            <h3 id="readingTitle">Loading...</h3>
+            <ul>
+              <li><strong>First Reading:</strong> <span id="firstReading">--</span></li>
+              <li><strong>Second Reading:</strong> <span id="secondReading">--</span></li>
+              <li><strong>Gospel:</strong> <span id="gospelReading">--</span></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="info-grid">
+        <article class="info-box highlight">
+          <p class="box-kicker">Mass Schedule</p>
+          <h3>Sunday Celebration</h3>
+          <p>Saturday Vigil: 5:30 PM</p>
+          <p>Sunday Morning: 8:00 AM & 10:30 AM</p>
+        </article>
+
+        <article class="info-box">
+          <p class="box-kicker">Prayer Focus</p>
+          <h3>Advent Reflection</h3>
+          <p>Prepare your heart for Christ with joyful prayer, worship, and attentive listening.</p>
+        </article>
+
+        <article class="info-box">
+          <p class="box-kicker">Community</p>
+          <h3>Serving the Church</h3>
+          <p>Readers, ministers, and volunteers proclaim God's Word with humility and love.</p>
+        </article>
+      </section>
+
+      <section id="readings" class="readings-section">
+        <div class="section-heading">
+          <p class="eyebrow">Sunday Reading Guide</p>
+          <h2>First and Second Readings</h2>
+        </div>
+        <div id="readingGrid" class="reading-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 St. Williams Catholic Church</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

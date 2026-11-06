@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login | St. Williams Catholic Church</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand-mark">✦</div>
+        <div>
+          <p class="brand-name">St. Williams</p>
+          <small>Catholic Church</small>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="index.html#readings">Readings</a>
+        <a href="login.html">Login</a>
+        <a href="signup.html">Sign Up</a>
+        <a href="owner.html">Owner</a>
+      </nav>
+
+      <a class="owner-button" href="owner.html">Owner Area</a>
+    </header>
+
+    <main class="login-page">
+      <section class="auth-card">
+        <p class="eyebrow">Member Access</p>
+        <h2>Login</h2>
+        <form id="loginForm" class="auth-form">
+          <label>
+            Email
+            <input type="email" id="loginEmail" placeholder="name@example.com" required />
+          </label>
+          <label>
+            Password
+            <input type="password" id="loginPassword" placeholder="Enter password" required />
+          </label>
+          <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+        <p id="loginMessage" class="message" aria-live="polite"></p>
+        <p>Not yet registered? <a href="signup.html">Create a new account</a></p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 St. Williams Catholic Church</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
