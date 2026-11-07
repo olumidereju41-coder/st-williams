@@ -1,733 +1,495 @@
-const STORAGE_KEY = 'st-williams-members';
-const SCHEDULE_KEY = 'st-williams-schedule';
-const OWNER_PASSWORD = 'church12';
+const STORAGE_KEYS = {
+  users: 'stwilliamsUsers',
+  session: 'stwilliamsSession',
+  assignments: 'stwilliamsAssignments'
+};
 
-const defaultUsers = [
-  {
-    name: 'Owner Admin',
-    email: 'owner@stwilliams.com',
-    password: OWNER_PASSWORD,
-    approved: true,
-    role: 'owner'
-  }
+const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+const feastDays = {
+  '01-01': 'Solemnity of Mary, Mother of God',
+  '01-06': 'Epiphany of the Lord',
+  '02-02': 'Presentation of the Lord',
+  '03-19': 'Saint Joseph, Husband of Mary',
+  '03-25': 'Annunciation of the Lord',
+  '04-16': 'Saint Bernadette Soubirous',
+  '05-01': 'Saint Joseph the Worker',
+  '05-13': 'Our Lady of Fatima',
+  '06-29': 'Saints Peter and Paul',
+  '08-15': 'Assumption of the Blessed Virgin Mary',
+  '09-08': 'Nativity of the Blessed Virgin Mary',
+  '11-01': 'All Saints\' Day',
+  '12-08': 'Immaculate Conception',
+  '12-25': 'Christmas Day',
+};
+
+const defaultReadings = [
+  'Genesis 1:1-5; Psalm 29:1-11; Matthew 5:1-12',
+  'Isaiah 40:1-11; Psalm 96:1-3, 7-10; Matthew 18:12-14',
+  '1 Samuel 1:9-20; Psalm 84:2-6; Luke 1:46-56',
+  'Exodus 14:15-31; Psalm 114:1-6; Matthew 28:16-20',
+  'Proverbs 3:5-12; Psalm 34:8-14; Luke 10:25-37',
+  'Romans 5:1-5; Psalm 103:1-4, 8-13; John 14:1-6',
+  'Hebrews 11:1-2, 8-19; Psalm 33:4-9; Mark 4:35-41'
 ];
 
-const sundayReadings = [
-  { title: 'First Sunday of Advent', first: 'Isaiah 2:1-5', second: 'Romans 13:11-14', gospel: 'Matthew 24:37-44' },
-  { title: 'Second Sunday of Advent', first: 'Isaiah 11:1-10', second: 'Romans 15:4-9', gospel: 'Matthew 3:1-12' },
-  { title: 'Third Sunday of Advent', first: 'Isaiah 35:1-6, 10', second: 'James 5:7-10', gospel: 'Matthew 11:2-11' },
-  { title: 'Fourth Sunday of Advent', first: 'Isaiah 7:10-14', second: 'Romans 1:1-7', gospel: 'Matthew 1:18-25' },
-  { title: 'Christmas Day', first: 'Isaiah 9:1-6', second: 'Titus 2:11-14', gospel: 'Luke 2:1-14' }
-];
+function getDateString(date) {
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
 
-const defaultSchedule = [
-  { id: 1, name: 'John Peter', role: 'Reader', day: 'Sunday', date: 10, month: 'November', time: '08:00' },
-  { id: 2, name: 'Mary Grace', role: 'Lector', day: 'Sunday', date: 10, month: 'November', time: '10:30' },
-  { id: 3, name: 'Daniel Mark', role: 'Reader', day: 'Saturday', date: 9, month: 'November', time: '17:30' },
-  { id: 4, name: 'Sarah Joy', role: 'Lector', day: 'Monday', date: 11, month: 'November', time: '09:00' }
-];
-
-function getMembers() {
-  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-  if (!saved || !saved.length) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultUsers));
-    return [...defaultUsers];
+function readStorage(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : fallback;
+  } catch (error) {
+    return fallback;
   }
-  return saved;
 }
 
-function saveMembers(members) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
+function saveStorage(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
 }
 
-function getSchedule() {
-  const saved = JSON.parse(localStorage.getItem(SCHEDULE_KEY));
-  if (!saved || !saved.length) {
-    localStorage.setItem(SCHEDULE_KEY, JSON.stringify(defaultSchedule));
-    return [...defaultSchedule];
-  }
-  return saved;
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add('show');
+  window.clearTimeout(showToast.timeoutId);
+  showToast.timeoutId = window.setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2200);
 }
 
-function saveSchedule(schedule) {
-  localStorage.setItem(SCHEDULE_KEY, JSON.stringify(schedule));
-}
-
-function redirectToSignup(email = '') {
-  const target = email ? `signup.html?email=${encodeURIComponent(email)}` : 'signup.html';
-  window.location.href = target;
-}
-
-function getCurrentUser() {
-  const saved = sessionStorage.getItem('st-williams-user');
-  return saved ? JSON.parse(saved) : null;
-}
-
-function isApprovedMember(member) {
-  return !!member && member.approved === true;
-}
-
-function ensureApprovedAccess() {
-  const user = getCurrentUser();
-  if (!user) return false;
-
-  const members = getMembers();
-  const activeMember = members.find((member) => member.email.toLowerCase() === user.email.toLowerCase());
-
-  if (!isApprovedMember(activeMember)) {
-    sessionStorage.removeItem('st-williams-user');
-    return false;
-  }
-
-  return true;
-}
-
-function formatDate() {
-  const readGrid = document.getElementById('readingGrid');
-  const todayDate = document.getElementById('todayDate');
-  const todayName = document.getElementById('todayName');
-  const readingTitle = document.getElementById('readingTitle');
-  const firstReading = document.getElementById('firstReading');
-  const secondReading = document.getElementById('secondReading');
-  const gospelReading = document.getElementById('gospelReading');
-
-  if (!readGrid || !todayDate || !todayName || !readingTitle || !firstReading || !secondReading || !gospelReading) return;
-
-  const now = new Date();
-  const dayName = now.toLocaleDateString('en-US', { weekday: 'long' });
-  const formattedDate = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-
-  todayDate.textContent = formattedDate;
-  todayName.textContent = dayName;
-
-  const selected = sundayReadings[now.getDate() % sundayReadings.length];
-  readingTitle.textContent = selected.title;
-  firstReading.textContent = selected.first;
-  secondReading.textContent = selected.second;
-  gospelReading.textContent = selected.gospel;
-}
-
-function renderReadings() {
-  const readGrid = document.getElementById('readingGrid');
-  if (!readGrid) return;
-
-  readGrid.innerHTML = sundayReadings
-    .map(
-      (reading) => `
-        <article class="reading-item">
-          <h3>${reading.title}</h3>
-          <p><strong>First Reading:</strong> ${reading.first}</p>
-          <p><strong>Second Reading:</strong> ${reading.second}</p>
-          <p><strong>Gospel:</strong> ${reading.gospel}</p>
-        </article>
-      `
-    )
-    .join('');
-}
-
-function handleLoginPage() {
-  const loginForm = document.getElementById('loginForm');
-  const loginMessage = document.getElementById('loginMessage');
-  if (!loginForm || !loginMessage) return;
-
-  loginForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const members = getMembers();
-    const foundUser = members.find((member) => member.email.toLowerCase() === email.toLowerCase());
-
-    if (!foundUser) {
-      loginMessage.style.color = '#c43636';
-      loginMessage.textContent = 'This email is not registered. Redirecting to sign up…';
-      setTimeout(() => redirectToSignup(email), 700);
-      return;
-    }
-
-    if (foundUser.password !== password) {
-      loginMessage.style.color = '#c43636';
-      loginMessage.textContent = 'Incorrect password. Redirecting to sign up…';
-      setTimeout(() => redirectToSignup(email), 700);
-      return;
-    }
-
-    if (!isApprovedMember(foundUser)) {
-      loginMessage.style.color = '#c43636';
-      loginMessage.textContent = 'Your account is waiting for owner approval.';
-      return;
-    }
-
-    sessionStorage.setItem('st-williams-user', JSON.stringify(foundUser));
-    loginMessage.style.color = '#1f8a57';
-    loginMessage.textContent = `Welcome, ${foundUser.name}! Redirecting to dashboard...`;
-    setTimeout(() => {
-      window.location.href = 'dashboard.html';
-    }, 600);
+function showView(viewName) {
+  document.querySelectorAll('.view').forEach((section) => {
+    section.classList.toggle('active', section.id === `${viewName}View`);
   });
-}
 
-function handleSignupPage() {
-  const signupForm = document.getElementById('signupForm');
-  const signupMessage = document.getElementById('signupMessage');
-  if (!signupForm || !signupMessage) return;
-
-  const params = new URLSearchParams(window.location.search);
-  const presetEmail = params.get('email');
-  if (presetEmail) {
-    document.getElementById('signupEmail').value = presetEmail;
-  }
-
-  signupForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const name = document.getElementById('signupName').value.trim();
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value;
-
-    if (!name || !email || !password) {
-      signupMessage.style.color = '#c43636';
-      signupMessage.textContent = 'Please complete all fields.';
-      return;
-    }
-
-    const members = getMembers();
-    const existingUser = members.find((member) => member.email.toLowerCase() === email.toLowerCase());
-    if (existingUser) {
-      signupMessage.style.color = '#c43636';
-      signupMessage.textContent = 'This email is already registered.';
-      return;
-    }
-
-    members.push({
-      name,
-      email,
-      password,
-      approved: false,
-      role: 'member'
-    });
-
-    saveMembers(members);
-    signupForm.reset();
-    signupMessage.style.color = '#1f8a57';
-    signupMessage.textContent = 'Your request has been sent. Wait for owner approval.';
+  document.querySelectorAll('.nav-link').forEach((button) => {
+    button.classList.toggle('active', button.dataset.view === viewName);
   });
-}
 
-function handleOwnerPage() {
-  const passwordForm = document.getElementById('ownerPasswordForm');
-  const ownerDashboard = document.getElementById('ownerDashboard');
-  const userForm = document.getElementById('memberForm');
-  const memberTable = document.getElementById('memberTable');
-  const pendingTable = document.getElementById('pendingTable');
-  const statusMessage = document.getElementById('ownerStatus');
-
-  if (!passwordForm || !ownerDashboard || !userForm || !memberTable || !pendingTable || !statusMessage) {
+  if (viewName === 'dashboard' && !isLoggedIn()) {
+    showView('login');
     return;
   }
+}
 
-  sessionStorage.removeItem('st-williams-owner');
-  ownerDashboard.classList.add('hidden');
-  passwordForm.classList.remove('hidden');
-
-  const clearOwnerSession = () => {
-    sessionStorage.removeItem('st-williams-owner');
-    passwordForm.classList.remove('hidden');
-    ownerDashboard.classList.add('hidden');
-  };
-
-  window.addEventListener('pagehide', clearOwnerSession);
-  window.addEventListener('beforeunload', clearOwnerSession);
-
-  passwordForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const password = document.getElementById('ownerPassword').value;
-    if (password === OWNER_PASSWORD) {
-      sessionStorage.setItem('st-williams-owner', 'true');
-      passwordForm.classList.add('hidden');
-      ownerDashboard.classList.remove('hidden');
-      statusMessage.style.color = '#1f8a57';
-      statusMessage.textContent = 'Owner access granted.';
-    } else {
-      statusMessage.style.color = '#c43636';
-      statusMessage.textContent = 'Incorrect owner password.';
-    }
-  });
-
-  const renderPendingSignups = () => {
-    const pending = getMembers().filter((member) => member.role !== 'owner' && !member.approved);
-
-    if (!pending.length) {
-      pendingTable.innerHTML = '<p class="empty-state">No pending signups.</p>';
-      return;
-    }
-
-    pendingTable.innerHTML = pending
-      .map(
-        (member) => `
-          <div class="member-row">
-            <div class="details">
-              <strong>${member.name}</strong>
-              <span>${member.email}</span>
-            </div>
-            <div class="details">
-              <strong>Status</strong>
-              <span>Pending</span>
-            </div>
-            <div class="member-actions">
-              <button class="approve-btn" type="button" data-action="approve" data-email="${member.email}">Approve</button>
-              <button class="edit-btn" type="button" data-action="edit" data-email="${member.email}">Edit</button>
-              <button class="delete-btn" type="button" data-action="delete" data-email="${member.email}">Delete</button>
-            </div>
-          </div>
-        `
-      )
-      .join('');
-
-    pendingTable.querySelectorAll('[data-action]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const action = button.dataset.action;
-        const email = button.dataset.email;
-        const user = getMembers().find((item) => item.email.toLowerCase() === email.toLowerCase());
-        if (!user) return;
-
-        if (action === 'approve') {
-          user.approved = true;
-          const members = getMembers();
-          saveMembers(members);
-          renderPendingSignups();
-          renderMembers();
-          if (sessionStorage.getItem('st-williams-user')) {
-            const sessionUser = getCurrentUser();
-            if (sessionUser && sessionUser.email.toLowerCase() === user.email.toLowerCase()) {
-              sessionStorage.setItem('st-williams-user', JSON.stringify(user));
-            }
-          }
-          statusMessage.style.color = '#1f8a57';
-          statusMessage.textContent = `${user.name} was approved and moved to the approved member list.`;
-        }
-
-        if (action === 'edit') {
-          document.getElementById('memberName').value = user.name;
-          document.getElementById('memberEmail').value = user.email;
-          document.getElementById('memberPassword').value = user.password;
-          document.getElementById('memberStatus').checked = user.approved;
-          document.getElementById('memberRole').value = user.role;
-          userForm.dataset.editing = user.email;
-          userForm.querySelector('button[type="submit"]').textContent = 'Save Changes';
-          statusMessage.textContent = `Editing ${user.name}.`;
-        }
-
-        if (action === 'delete') {
-          const members = getMembers().filter((item) => item.email.toLowerCase() !== email.toLowerCase());
-          saveMembers(members);
-          renderPendingSignups();
-          renderMembers();
-          statusMessage.style.color = '#c43636';
-          statusMessage.textContent = `${user.name} was deleted.`;
-        }
-      });
-    });
-  };
-
-  const renderMembers = () => {
-    const members = getMembers();
-    const filtered = members.filter((member) => member.role !== 'owner' && member.approved);
-
-    if (!filtered.length) {
-      memberTable.innerHTML = '<p class="empty-state">No approved members yet.</p>';
-      return;
-    }
-
-    memberTable.innerHTML = filtered
-      .map(
-        (member) => `
-          <div class="member-row">
-            <div class="details">
-              <strong>${member.name}</strong>
-              <span>${member.email}</span>
-            </div>
-            <div class="details">
-              <strong>Role</strong>
-              <span>${member.role}</span>
-            </div>
-            <div class="member-actions">
-              <button class="edit-btn" type="button" data-action="edit" data-email="${member.email}">Edit</button>
-              <button class="delete-btn" type="button" data-action="delete" data-email="${member.email}">Delete</button>
-            </div>
-          </div>
-        `
-      )
-      .join('');
-
-    memberTable.querySelectorAll('[data-action]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const action = button.dataset.action;
-        const email = button.dataset.email;
-        const user = getMembers().find((item) => item.email.toLowerCase() === email.toLowerCase());
-        if (!user) return;
-
-        if (action === 'edit') {
-          document.getElementById('memberName').value = user.name;
-          document.getElementById('memberEmail').value = user.email;
-          document.getElementById('memberPassword').value = user.password;
-          document.getElementById('memberStatus').checked = user.approved;
-          document.getElementById('memberRole').value = user.role;
-          userForm.dataset.editing = user.email;
-          userForm.querySelector('button[type="submit"]').textContent = 'Save Changes';
-          statusMessage.textContent = `Editing ${user.name}.`;
-        }
-
-        if (action === 'delete') {
-          const members = getMembers().filter((item) => item.email.toLowerCase() !== email.toLowerCase());
-          saveMembers(members);
-          renderPendingSignups();
-          renderMembers();
-          statusMessage.style.color = '#c43636';
-          statusMessage.textContent = `${user.name} was removed.`;
-        }
-      });
-    });
-  };
-
-  userForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-
-    const members = getMembers();
-    const name = document.getElementById('memberName').value.trim();
-    const email = document.getElementById('memberEmail').value.trim();
-    const password = document.getElementById('memberPassword').value;
-    const approved = document.getElementById('memberStatus').checked;
-    const role = document.getElementById('memberRole').value;
-
-    if (!name || !email || !password) {
-      statusMessage.style.color = '#c43636';
-      statusMessage.textContent = 'Please fill in all fields.';
-      return;
-    }
-
-    const editingEmail = userForm.dataset.editing || null;
-
-    if (editingEmail) {
-      const target = members.find((member) => member.email.toLowerCase() === editingEmail.toLowerCase());
-      if (!target) {
-        statusMessage.style.color = '#c43636';
-        statusMessage.textContent = 'User not found.';
+function bindViewTriggers() {
+  document.querySelectorAll('[data-view]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const view = button.dataset.view;
+      if (view === 'dashboard' && !isLoggedIn()) {
+        showView('login');
         return;
       }
-
-      target.name = name;
-      target.email = email;
-      target.password = password;
-      target.approved = approved;
-      target.role = role;
-      userForm.dataset.editing = '';
-      userForm.reset();
-      userForm.querySelector('button[type="submit"]').textContent = 'Add Member';
-      saveMembers(members);
-      renderPendingSignups();
-      renderMembers();
-      statusMessage.style.color = '#1f8a57';
-      statusMessage.textContent = `${name} was updated successfully.`;
-      return;
-    }
-
-    const existing = members.find((member) => member.email.toLowerCase() === email.toLowerCase());
-    if (existing) {
-      statusMessage.style.color = '#c43636';
-      statusMessage.textContent = 'This email already exists.';
-      return;
-    }
-
-    members.push({
-      name,
-      email,
-      password,
-      approved,
-      role
+      showView(view);
     });
-
-    saveMembers(members);
-    userForm.reset();
-    renderPendingSignups();
-    renderMembers();
-    statusMessage.style.color = '#1f8a57';
-    statusMessage.textContent = `${name} was added successfully.`;
   });
 
-  document.getElementById('clearMemberForm').addEventListener('click', () => {
-    userForm.dataset.editing = '';
-    userForm.reset();
-    userForm.querySelector('button[type="submit"]').textContent = 'Add Member';
-    statusMessage.textContent = 'Form cleared.';
-  });
-
-  renderPendingSignups();
-  renderMembers();
-
-  const ownerScheduleForm = document.getElementById('ownerScheduleForm');
-  const ownerScheduleTable = document.getElementById('ownerScheduleTable');
-  const ownerScheduleStatus = document.getElementById('ownerScheduleStatus');
-  if (!ownerScheduleForm || !ownerScheduleTable || !ownerScheduleStatus) return;
-
-  const renderOwnerSchedule = () => {
-    const schedule = getSchedule();
-    if (!schedule.length) {
-      ownerScheduleTable.innerHTML = '<p class="empty-state">No readers assigned yet.</p>';
-      return;
-    }
-
-    ownerScheduleTable.innerHTML = schedule
-      .map((entry) => `
-        <div class="member-row">
-          <div class="details">
-            <strong>${entry.name}</strong>
-            <span>${entry.role}</span>
-          </div>
-          <div class="details">
-            <strong>Schedule</strong>
-            <span>${entry.day}, ${entry.date} ${entry.month}, ${entry.time}</span>
-          </div>
-          <div class="member-actions">
-            <button class="edit-btn" type="button" data-schedule-action="edit" data-id="${entry.id}">Edit</button>
-            <button class="delete-btn" type="button" data-schedule-action="delete" data-id="${entry.id}">Delete</button>
-          </div>
-        </div>
-      `)
-      .join('');
-
-    ownerScheduleTable.querySelectorAll('[data-schedule-action]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const id = Number(button.dataset.id);
-        const action = button.dataset.scheduleAction;
-        const schedule = getSchedule();
-        const item = schedule.find((entry) => entry.id === id);
-        if (!item) return;
-
-        if (action === 'delete') {
-          const updated = schedule.filter((entry) => entry.id !== id);
-          saveSchedule(updated);
-          renderOwnerSchedule();
-          ownerScheduleStatus.style.color = '#c43636';
-          ownerScheduleStatus.textContent = `${item.name} was removed from the schedule.`;
-          return;
-        }
-
-        if (action === 'edit') {
-          document.getElementById('ownerScheduleName').value = item.name;
-          document.getElementById('ownerScheduleRole').value = item.role;
-          document.getElementById('ownerScheduleDay').value = item.day;
-          document.getElementById('ownerScheduleDate').value = item.date;
-          document.getElementById('ownerScheduleMonth').value = item.month;
-          document.getElementById('ownerScheduleTime').value = item.time;
-          ownerScheduleForm.dataset.editingId = String(id);
-          ownerScheduleForm.querySelector('button[type="submit"]').textContent = 'Save Schedule';
-          ownerScheduleStatus.textContent = `Editing ${item.name}.`;
-        }
-      });
-    });
-  };
-
-  ownerScheduleForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const name = document.getElementById('ownerScheduleName').value.trim();
-    const role = document.getElementById('ownerScheduleRole').value;
-    const day = document.getElementById('ownerScheduleDay').value;
-    const date = Number(document.getElementById('ownerScheduleDate').value);
-    const month = document.getElementById('ownerScheduleMonth').value;
-    const time = document.getElementById('ownerScheduleTime').value;
-
-    if (!name || !date || !time) {
-      ownerScheduleStatus.style.color = '#c43636';
-      ownerScheduleStatus.textContent = 'Please complete all schedule fields.';
-      return;
-    }
-
-    const schedule = getSchedule();
-    const editingId = ownerScheduleForm.dataset.editingId ? Number(ownerScheduleForm.dataset.editingId) : null;
-
-    if (editingId) {
-      const item = schedule.find((entry) => entry.id === editingId);
-      if (item) {
-        item.name = name;
-        item.role = role;
-        item.day = day;
-        item.date = date;
-        item.month = month;
-        item.time = time;
-      }
-      ownerScheduleForm.dataset.editingId = '';
-      ownerScheduleForm.querySelector('button[type="submit"]').textContent = 'Add Schedule';
-    } else {
-      schedule.push({
-        id: Date.now(),
-        name,
-        role,
-        day,
-        date,
-        month,
-        time
-      });
-    }
-
-    saveSchedule(schedule);
-    ownerScheduleForm.reset();
-    renderOwnerSchedule();
-    ownerScheduleStatus.style.color = '#1f8a57';
-    ownerScheduleStatus.textContent = editingId ? 'Schedule updated successfully.' : 'New reading assigned successfully.';
-  });
-
-  document.getElementById('clearOwnerScheduleForm').addEventListener('click', () => {
-    ownerScheduleForm.dataset.editingId = '';
-    ownerScheduleForm.reset();
-    ownerScheduleForm.querySelector('button[type="submit"]').textContent = 'Add Schedule';
-    ownerScheduleStatus.textContent = 'Schedule form cleared.';
-  });
-
-  renderOwnerSchedule();
-}
-
-function handleDashboardPage() {
-  const user = getCurrentUser();
-  if (!user || !ensureApprovedAccess()) {
-    window.location.href = 'login.html';
-    return;
-  }
-
-  const dashboardDay = document.getElementById('dashboardDay');
-  const dashboardDate = document.getElementById('dashboardDate');
-  const dashboardReadingTitle = document.getElementById('dashboardReadingTitle');
-  const dashboardReadingText = document.getElementById('dashboardReadingText');
-  const dashboardRosterCount = document.getElementById('dashboardRosterCount');
-  const dashboardRoleLabel = document.getElementById('dashboardRoleLabel');
-  const scheduleTable = document.getElementById('scheduleTable');
-  const scheduleForm = document.getElementById('scheduleForm');
-  const scheduleStatus = document.getElementById('scheduleStatus');
-
-  if (!dashboardDay || !dashboardDate || !dashboardReadingTitle || !dashboardReadingText || !dashboardRosterCount || !dashboardRoleLabel || !scheduleTable || !scheduleForm || !scheduleStatus) {
-    return;
-  }
-
-  const now = new Date();
-  dashboardDay.textContent = now.toLocaleDateString('en-US', { weekday: 'long' });
-  dashboardDate.textContent = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-
-  const selected = sundayReadings[now.getDate() % sundayReadings.length];
-  dashboardReadingTitle.textContent = selected.title;
-  dashboardReadingText.textContent = `${selected.first} • ${selected.second} • ${selected.gospel}`;
-
-  const renderScheduleTable = () => {
-    const schedule = getSchedule();
-    dashboardRosterCount.textContent = `${schedule.length} readers`;
-    dashboardRoleLabel.textContent = user.role === 'owner' ? 'Owner admin access' : 'Approved member access';
-
-    if (!schedule.length) {
-      scheduleTable.innerHTML = '<p class="empty-state">No reading assignments yet.</p>';
-      return;
-    }
-
-    scheduleTable.innerHTML = schedule
-      .map(
-        (entry) => `
-          <div class="member-row">
-            <div class="details">
-              <strong>${entry.name}</strong>
-              <span>${entry.role}</span>
-            </div>
-            <div class="details">
-              <strong>${entry.day}</strong>
-              <span>${entry.date} ${entry.month} • ${entry.time}</span>
-            </div>
-          </div>
-        `
-      )
-      .join('');
-  };
-
-  if (user.role === 'owner') {
-    scheduleForm.classList.remove('hidden');
-    scheduleForm.addEventListener('submit', (event) => {
+  document.querySelectorAll('[data-view-trigger]').forEach((link) => {
+    link.addEventListener('click', (event) => {
       event.preventDefault();
-      const schedule = getSchedule();
-      const name = document.getElementById('scheduleName').value.trim();
-      const role = document.getElementById('scheduleRole').value;
-      const day = document.getElementById('scheduleDay').value;
-      const date = Number(document.getElementById('scheduleDate').value);
-      const month = document.getElementById('scheduleMonth').value;
-      const time = document.getElementById('scheduleTime').value;
-
-      if (!name || !date || !time) {
-        scheduleStatus.style.color = '#c43636';
-        scheduleStatus.textContent = 'Please complete all schedule fields.';
-        return;
-      }
-
-      schedule.push({ id: Date.now(), name, role, day, date, month, time });
-      saveSchedule(schedule);
-      scheduleForm.reset();
-      renderScheduleTable();
-      scheduleStatus.style.color = '#1f8a57';
-      scheduleStatus.textContent = 'Reader added successfully.';
+      showView(link.dataset.viewTrigger);
     });
-
-    document.getElementById('clearScheduleForm').addEventListener('click', () => {
-      scheduleForm.reset();
-      scheduleStatus.textContent = 'Form cleared.';
-    });
-  } else {
-    scheduleForm.classList.add('hidden');
-  }
-
-  renderScheduleTable();
+  });
 }
 
-function handleReadersPage() {
-  const readersList = document.getElementById('readersPageList');
-  if (!readersList) return;
+function isLoggedIn() {
+  const session = readStorage(STORAGE_KEYS.session, null);
+  return Boolean(session && session.email);
+}
 
-  const schedule = getSchedule();
-  if (!schedule.length) {
-    readersList.innerHTML = '<p class="empty-state">No readers have been assigned yet.</p>';
+function getCurrentSession() {
+  return readStorage(STORAGE_KEYS.session, null);
+}
+
+function setCurrentSession(user) {
+  saveStorage(STORAGE_KEYS.session, user);
+}
+
+function logout() {
+  localStorage.removeItem(STORAGE_KEYS.session);
+  updateAuthState();
+  showView('login');
+  showToast('You have been logged out.');
+}
+
+function updateAuthState() {
+  const session = getCurrentSession();
+  const logoutBtn = document.getElementById('logoutBtn');
+  const isLogged = Boolean(session && session.name);
+
+  if (logoutBtn) {
+    logoutBtn.classList.toggle('hidden', !isLogged);
+  }
+
+  document.querySelectorAll('.nav-link[data-view="dashboard"]').forEach((button) => {
+    button.classList.toggle('active', false);
+  });
+
+  if (isLogged) {
+    const name = session.name || 'Lector';
+    const greeting = document.getElementById('dashboardGreeting');
+    if (greeting) {
+      greeting.textContent = `Welcome, ${name}.`;
+    }
+  }
+}
+
+function createUser(user) {
+  const users = readStorage(STORAGE_KEYS.users, []);
+  users.push(user);
+  saveStorage(STORAGE_KEYS.users, users);
+}
+
+function findUser(email) {
+  const users = readStorage(STORAGE_KEYS.users, []);
+  return users.find((user) => user.email.toLowerCase() === email.toLowerCase());
+}
+
+function validateSignupForm(name, email, password) {
+  if (!name || !email || !password) {
+    return 'Please complete all signup fields.';
+  }
+
+  if (password.length > 8) {
+    return 'Password must be 8 characters or less.';
+  }
+
+  if (findUser(email)) {
+    return 'An account already exists for this email.';
+  }
+
+  return '';
+}
+
+function handleSignup(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const name = form.querySelector('#signupName').value.trim();
+  const email = form.querySelector('#signupEmail').value.trim();
+  const password = form.querySelector('#signupPassword').value.trim();
+
+  const validationMessage = validateSignupForm(name, email, password);
+  if (validationMessage) {
+    showToast(validationMessage);
     return;
   }
 
-  readersList.innerHTML = schedule
+  createUser({ name, email, password });
+  form.reset();
+  showToast('Account created successfully. Please login.');
+  showView('login');
+}
+
+function handleLogin(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const email = form.querySelector('#loginEmail').value.trim();
+  const password = form.querySelector('#loginPassword').value.trim();
+  const user = findUser(email);
+
+  if (!user || user.password !== password) {
+    showToast('Incorrect email or password.');
+    return;
+  }
+
+  setCurrentSession({ name: user.name, email: user.email });
+  updateAuthState();
+  renderAssignments();
+  form.reset();
+  showView('dashboard');
+  showToast('Login successful.');
+}
+
+function getAssignments() {
+  return readStorage(STORAGE_KEYS.assignments, []);
+}
+
+function saveAssignments(list) {
+  saveStorage(STORAGE_KEYS.assignments, list);
+}
+
+function renderAssignments() {
+  const assignments = getAssignments().sort((a, b) => new Date(a.date) - new Date(b.date));
+  const readerList = document.getElementById('readerList');
+  const tableBody = document.getElementById('assignmentTableBody');
+  const statusText = document.getElementById('dashboardSummary');
+
+  if (!readerList || !tableBody) {
+    return;
+  }
+
+  if (!assignments.length) {
+    readerList.innerHTML = '<li class="empty-state">No readings added yet.</li>';
+    tableBody.innerHTML = '<tr><td colspan="5" class="empty-state-cell">No entries yet.</td></tr>';
+    if (statusText) {
+      statusText.textContent = '0 readers assigned';
+    }
+    return;
+  }
+
+  readerList.innerHTML = assignments
     .map(
-      (entry) => `
-        <div class="member-row">
-          <div class="details">
-            <strong>${entry.name}</strong>
-            <span>${entry.role}</span>
-          </div>
-          <div class="details">
-            <strong>${entry.day}</strong>
-            <span>${entry.date} ${entry.month} • ${entry.time}</span>
-          </div>
-        </div>
+      (item) => `
+        <li>
+          <span>${item.name}</span>
+          <span class="pill">${item.type}</span>
+        </li>
       `
     )
     .join('');
+
+  tableBody.innerHTML = assignments
+    .map(
+      (item) => `
+        <tr>
+          <td>${item.name}</td>
+          <td>${formatDate(item.date)}</td>
+          <td>${item.day}</td>
+          <td>${formatTime(item.time)}</td>
+          <td>${item.type}</td>
+        </tr>
+      `
+    )
+    .join('');
+
+  if (statusText) {
+    const label = assignments.length === 1 ? '1 reader assigned' : `${assignments.length} readers assigned`;
+    statusText.textContent = label;
+  }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  formatDate();
-  renderReadings();
+function formatDate(value) {
+  const safeDate = new Date(`${value}T00:00:00`);
+  return safeDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
-  if (window.location.pathname.endsWith('login.html')) {
-    handleLoginPage();
+function formatTime(value) {
+  if (!value) {
+    return '—';
+  }
+  const [hour, minute] = value.split(':');
+  const date = new Date();
+  date.setHours(Number(hour), Number(minute));
+  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function handleAssignment(event) {
+  event.preventDefault();
+
+  if (!isLoggedIn()) {
+    showView('login');
+    showToast('Please login to add a reading assignment.');
+    return;
   }
 
-  if (window.location.pathname.endsWith('signup.html')) {
-    handleSignupPage();
+  const name = document.getElementById('lectorName').value.trim();
+  const date = document.getElementById('assignmentDate').value;
+  const day = document.getElementById('assignmentDay').value.trim();
+  const time = document.getElementById('assignmentTime').value;
+  const type = document.getElementById('readingType').value;
+
+  if (!name || !date || !day || !time) {
+    showToast('Please complete all assignment fields.');
+    return;
   }
 
-  if (window.location.pathname.endsWith('owner.html')) {
-    handleOwnerPage();
+  const assignments = getAssignments();
+  assignments.push({ name, date, day, time, type });
+  saveAssignments(assignments);
+  renderAssignments();
+  event.currentTarget.reset();
+  showToast('Lector assignment added.');
+}
+
+function getLiturgicalInfo(date) {
+  const day = date.getDate();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const key = `${month}-${String(day).padStart(2, '0')}`;
+  const feast = feastDays[key] || 'Ordinary Time';
+  const sundayReading = getSundayReading(date);
+  const dailyReading = getDailyReading(date);
+
+  return {
+    celebration: feast,
+    daily: dailyReading,
+    sunday: sundayReading
+  };
+}
+
+function getDailyReading(date) {
+  if (date.getDay() === 0) {
+    return 'Luke 6:12-19 — Jesus chose the twelve apostles and taught the people.';
   }
 
-  if (window.location.pathname.endsWith('dashboard.html')) {
-    handleDashboardPage();
+  const index = (date.getDate() + date.getMonth()) % defaultReadings.length;
+  return defaultReadings[index];
+}
+
+function getSundayReading(date) {
+  const day = date.getDay();
+
+  if (day !== 0) {
+    return 'Sunday readings are displayed for the selected Sunday date.';
   }
 
-  if (window.location.pathname.endsWith('readers.html')) {
-    handleReadersPage();
+  const cycle = (date.getFullYear() + date.getMonth()) % 3;
+  const sundayReadings = [
+    'Isaiah 56:1, 6-7; Psalm 67:2-3, 5-6, 8; Romans 11:17-24; Matthew 15:21-28',
+    'Jeremiah 17:5-8; Psalm 1:1-4, 6; 1 Corinthians 15:12, 16-20; Luke 6:17, 20-26',
+    'Joshua 24:1-2, 15-18; Psalm 34:2-9; Ephesians 2:19-22; John 6:60-69'
+  ];
+
+  return sundayReadings[cycle] || sundayReadings[0];
+}
+
+function renderCalendar(date) {
+  const year = date.getFullYear();
+  const monthIndex = date.getMonth();
+  const monthTitle = document.getElementById('monthTitle');
+  const calendarGrid = document.getElementById('calendarGrid');
+
+  if (!monthTitle || !calendarGrid) {
+    return;
   }
-});
+
+  monthTitle.textContent = `${monthNames[monthIndex]} ${year}`;
+  calendarGrid.innerHTML = '';
+
+  const firstDay = new Date(year, monthIndex, 1);
+  const lastDay = new Date(year, monthIndex + 1, 0);
+
+  for (let i = 0; i < firstDay.getDay(); i += 1) {
+    const blank = document.createElement('div');
+    blank.className = 'calendar-day empty';
+    calendarGrid.appendChild(blank);
+  }
+
+  const selectedDate = document.getElementById('readingDate').value;
+
+  for (let day = 1; day <= lastDay.getDate(); day += 1) {
+    const cellDate = new Date(year, monthIndex, day);
+    const cell = document.createElement('div');
+    const celebration = feastDays[`${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`];
+    const isToday = getDateString(new Date()) === getDateString(cellDate);
+    const isSelected = selectedDate === getDateString(cellDate);
+
+    cell.className = `calendar-day ${isToday ? 'is-today' : ''}`;
+    if (isSelected) {
+      cell.style.borderColor = 'rgba(122, 31, 45, 0.6)';
+      cell.style.background = 'rgba(122, 31, 45, 0.08)';
+    }
+
+    const number = document.createElement('span');
+    number.className = 'date-number';
+    number.textContent = day;
+
+    const feast = document.createElement('span');
+    feast.className = 'date-feast';
+    feast.textContent = celebration ? celebration.split(',')[0] : cellDate.getDay() === 0 ? 'Sun' : '—';
+
+    cell.appendChild(number);
+    cell.appendChild(feast);
+    cell.addEventListener('click', () => {
+      const dateValue = getDateString(cellDate);
+      document.getElementById('readingDate').value = dateValue;
+      updateReadingsForDate(cellDate);
+    });
+
+    calendarGrid.appendChild(cell);
+  }
+}
+
+function updateReadingsForDate(date) {
+  const info = getLiturgicalInfo(date);
+  const dailyLabel = document.getElementById('dailyReadingLabel');
+  const sundayLabel = document.getElementById('sundayReadingLabel');
+  const celebrationLabel = document.getElementById('celebrationLabel');
+  const dailyText = document.getElementById('dailyReadingText');
+  const sundayText = document.getElementById('sundayReadingText');
+  const celebrationText = document.getElementById('celebrationText');
+  const todayText = document.getElementById('todayText');
+
+  if (dailyLabel) dailyLabel.textContent = `Daily Reading • ${weekdayNames[date.getDay()]}`;
+  if (sundayLabel) sundayLabel.textContent = `Sunday Reading • ${date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}`;
+  if (celebrationLabel) celebrationLabel.textContent = `Celebration • ${date.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}`;
+  if (dailyText) dailyText.textContent = info.daily;
+  if (sundayText) sundayText.textContent = info.sunday;
+  if (celebrationText) celebrationText.textContent = info.celebration;
+  if (todayText) todayText.textContent = date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+  renderCalendar(date);
+}
+
+function initializeCurrentDate() {
+  const today = new Date();
+  const dateInput = document.getElementById('readingDate');
+  if (dateInput) {
+    dateInput.value = getDateString(today);
+  }
+
+  updateReadingsForDate(today);
+}
+
+function wireUpForms() {
+  const signupForm = document.getElementById('signupForm');
+  const loginForm = document.getElementById('loginForm');
+  const assignmentForm = document.getElementById('assignmentForm');
+  const viewReadingBtn = document.getElementById('viewReadingBtn');
+
+  if (signupForm) {
+    signupForm.addEventListener('submit', handleSignup);
+  }
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', handleLogin);
+  }
+
+  if (assignmentForm) {
+    assignmentForm.addEventListener('submit', handleAssignment);
+  }
+
+  if (viewReadingBtn) {
+    viewReadingBtn.addEventListener('click', () => {
+      const value = document.getElementById('readingDate').value;
+      if (!value) {
+        showToast('Please select a date first.');
+        return;
+      }
+      updateReadingsForDate(new Date(`${value}T12:00:00`));
+    });
+  }
+
+  const dateInput = document.getElementById('readingDate');
+  if (dateInput) {
+    dateInput.addEventListener('change', (event) => {
+      const date = new Date(`${event.target.value}T12:00:00`);
+      updateReadingsForDate(date);
+    });
+  }
+
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', logout);
+  }
+}
+
+function initApp() {
+  bindViewTriggers();
+  wireUpForms();
+  initializeCurrentDate();
+  updateAuthState();
+  renderAssignments();
+
+  if (isLoggedIn()) {
+    showView('dashboard');
+  } else {
+    showView('home');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initApp);

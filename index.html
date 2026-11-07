@@ -3,99 +3,238 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>St. Williams Catholic Church</title>
+    <title>St Williams | Catholic Lector</title>
+    <meta
+      name="description"
+      content="St Williams is a Catholic lector and readings portal for daily scripture, Sunday readings, and liturgical celebrations."
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="topbar">
-      <div class="brand-wrap">
-        <div class="brand-mark">✦</div>
-        <div>
-          <p class="brand-name">St. Williams</p>
-          <small>Catholic Church</small>
-        </div>
-      </div>
-
-      <nav class="main-nav" aria-label="Main navigation">
-        <a href="index.html">Home</a>
-        <a href="#readings">Readings</a>
-        <a href="login.html">Login</a>
-        <a href="signup.html">Sign Up</a>
-        <a href="owner.html">Owner</a>
-      </nav>
-
-      <a class="owner-button" href="owner.html">Owner Area</a>
-    </header>
-
-    <main>
-      <section class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">Catholic Reading & Prayer</p>
-          <h1>Welcome to St. Williams Catholic Church</h1>
-          <p class="lead">
-            Join our community of worshippers, readers, and faithful servants. Members may log in once approved by the owner.
-          </p>
-          <div class="cta-row">
-            <a class="primary-btn" href="login.html">Login</a>
-            <a class="secondary-btn" href="#readings">View Sunday Readings</a>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand-wrap" aria-label="St Williams brand">
+          <div class="brand-mark">S</div>
+          <div>
+            <p class="brand-kicker">Catholic Lector Ministry</p>
+            <h1>St Williams</h1>
           </div>
         </div>
 
-        <div class="hero-panel">
-          <div class="date-card">
-            <span class="date-label">Today</span>
-            <h2 id="todayDate">Loading date...</h2>
-            <p id="todayName">Sunday</p>
+        <nav class="nav" aria-label="Main navigation">
+          <button class="nav-link active" data-view="home" type="button">Home</button>
+          <button class="nav-link" data-view="signup" type="button">Sign Up</button>
+          <button class="nav-link" data-view="login" type="button">Login</button>
+          <button class="nav-link" data-view="dashboard" type="button">Dashboard</button>
+          <button id="logoutBtn" class="nav-link danger hidden" type="button">Logout</button>
+        </nav>
+      </header>
+
+      <main class="app-main">
+        <section id="homeView" class="view active">
+          <div class="hero-panel">
+            <div>
+              <p class="eyebrow">Daily faith and scripture</p>
+              <h2>Readings for prayer, reflection, and service.</h2>
+              <p class="hero-copy">
+                Discover the daily and Sunday scripture readings and the Catholic celebration for the date you choose.
+              </p>
+            </div>
+            <div class="hero-badge-card">
+              <span class="mini-label">Today</span>
+              <strong id="todayText">Loading date...</strong>
+            </div>
           </div>
 
-          <div class="reading-card">
-            <p class="small-label">Sunday Reading</p>
-            <h3 id="readingTitle">Loading...</h3>
-            <ul>
-              <li><strong>First Reading:</strong> <span id="firstReading">--</span></li>
-              <li><strong>Second Reading:</strong> <span id="secondReading">--</span></li>
-              <li><strong>Gospel:</strong> <span id="gospelReading">--</span></li>
-            </ul>
+          <div class="controls-panel">
+            <label for="readingDate">Select a date</label>
+            <div class="date-control-row">
+              <input id="readingDate" type="date" />
+              <button id="viewReadingBtn" type="button">Show Readings</button>
+            </div>
           </div>
-        </div>
-      </section>
 
-      <section class="info-grid">
-        <article class="info-box highlight">
-          <p class="box-kicker">Mass Schedule</p>
-          <h3>Sunday Celebration</h3>
-          <p>Saturday Vigil: 5:30 PM</p>
-          <p>Sunday Morning: 8:00 AM & 10:30 AM</p>
-        </article>
+          <div class="readings-grid">
+            <article class="reading-card highlight">
+              <span class="card-tag">Daily Reading</span>
+              <h3 id="dailyReadingLabel">Daily Reading</h3>
+              <p id="dailyReadingText">Select a date to view the daily scripture reading.</p>
+            </article>
 
-        <article class="info-box">
-          <p class="box-kicker">Prayer Focus</p>
-          <h3>Advent Reflection</h3>
-          <p>Prepare your heart for Christ with joyful prayer, worship, and attentive listening.</p>
-        </article>
+            <article class="reading-card">
+              <span class="card-tag">Sunday Reading</span>
+              <h3 id="sundayReadingLabel">Sunday Reading</h3>
+              <p id="sundayReadingText">View the Sunday scripture reading for the selected date.</p>
+            </article>
 
-        <article class="info-box">
-          <p class="box-kicker">Community</p>
-          <h3>Serving the Church</h3>
-          <p>Readers, ministers, and volunteers proclaim God's Word with humility and love.</p>
-        </article>
-      </section>
+            <article class="reading-card accent">
+              <span class="card-tag">Celebration</span>
+              <h3 id="celebrationLabel">Celebration</h3>
+              <p id="celebrationText">See which Catholic feast or celebration falls on the selected date.</p>
+            </article>
+          </div>
 
-      <section id="readings" class="readings-section">
-        <div class="section-heading">
-          <p class="eyebrow">Sunday Reading Guide</p>
-          <h2>First and Second Readings</h2>
-        </div>
-        <div id="readingGrid" class="reading-grid" aria-live="polite"></div>
-      </section>
-    </main>
+          <div class="calendar-card">
+            <div class="calendar-header">
+              <h3 id="monthTitle">Month</h3>
+            </div>
+            <div class="weekdays-row">
+              <span>Sun</span>
+              <span>Mon</span>
+              <span>Tue</span>
+              <span>Wed</span>
+              <span>Thu</span>
+              <span>Fri</span>
+              <span>Sat</span>
+            </div>
+            <div id="calendarGrid" class="calendar-grid"></div>
+          </div>
+        </section>
 
-    <footer class="site-footer">
-      <p>© 2026 St. Williams Catholic Church</p>
-    </footer>
+        <section id="signupView" class="view">
+          <div class="auth-panel">
+            <div class="auth-copy">
+              <p class="eyebrow">Join the ministry</p>
+              <h2>Create your St Williams account</h2>
+              <p>
+                Sign up to manage readings, schedule lectors, and keep the liturgy organized for the parish.
+              </p>
+            </div>
+
+            <form id="signupForm" class="auth-form">
+              <div class="field-group">
+                <label for="signupName">Full name</label>
+                <input id="signupName" name="name" type="text" placeholder="Your full name" required />
+              </div>
+
+              <div class="field-group">
+                <label for="signupEmail">Email address</label>
+                <input id="signupEmail" name="email" type="email" placeholder="you@example.com" required />
+              </div>
+
+              <div class="field-group">
+                <label for="signupPassword">Password (maximum 8 characters)</label>
+                <input id="signupPassword" name="password" type="password" maxlength="8" placeholder="Enter a password" required />
+              </div>
+
+              <button type="submit">Create account</button>
+              <p class="switch-text">Already have an account? <a href="#" data-view-trigger="login">Login here</a></p>
+            </form>
+          </div>
+        </section>
+
+        <section id="loginView" class="view">
+          <div class="auth-panel">
+            <div class="auth-copy">
+              <p class="eyebrow">Welcome back</p>
+              <h2>Login to continue</h2>
+              <p>Use your email and your saved password to access the lector scheduling dashboard.</p>
+            </div>
+
+            <form id="loginForm" class="auth-form">
+              <div class="field-group">
+                <label for="loginEmail">Email address</label>
+                <input id="loginEmail" name="email" type="email" placeholder="you@example.com" required />
+              </div>
+
+              <div class="field-group">
+                <label for="loginPassword">Password</label>
+                <input id="loginPassword" name="password" type="password" maxlength="8" placeholder="Your password" required />
+              </div>
+
+              <button type="submit">Login</button>
+              <p class="switch-text">Need an account? <a href="#" data-view-trigger="signup">Sign up</a></p>
+            </form>
+          </div>
+        </section>
+
+        <section id="dashboardView" class="view">
+          <div class="dashboard-header">
+            <div>
+              <p class="eyebrow">Lector dashboard</p>
+              <h2 id="dashboardGreeting">Welcome, lector.</h2>
+            </div>
+            <div class="status-pill" id="dashboardSummary">0 readers assigned</div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="dashboard-card">
+              <h3>People taking readings</h3>
+              <ul id="readerList" class="reader-list" aria-live="polite">
+                <li class="empty-state">No readings added yet.</li>
+              </ul>
+
+              <form id="assignmentForm" class="assignment-form">
+                <div class="field-group">
+                  <label for="lectorName">Name</label>
+                  <input id="lectorName" type="text" placeholder="Enter person name" required />
+                </div>
+
+                <div class="field-row two-up">
+                  <div class="field-group">
+                    <label for="assignmentDate">Date</label>
+                    <input id="assignmentDate" type="date" required />
+                  </div>
+                  <div class="field-group">
+                    <label for="assignmentDay">Day</label>
+                    <input id="assignmentDay" type="text" placeholder="Sunday" required />
+                  </div>
+                </div>
+
+                <div class="field-row two-up">
+                  <div class="field-group">
+                    <label for="assignmentTime">Time</label>
+                    <input id="assignmentTime" type="time" required />
+                  </div>
+                  <div class="field-group">
+                    <label for="readingType">Reading type</label>
+                    <select id="readingType">
+                      <option value="First Reading">First Reading</option>
+                      <option value="Psalm">Psalm</option>
+                      <option value="Gospel">Gospel</option>
+                      <option value="Responsorial Psalm">Responsorial Psalm</option>
+                      <option value="Lector Reading">Lector Reading</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button type="submit">Add lector schedule</button>
+              </form>
+            </div>
+
+            <div class="dashboard-card">
+              <h3>Lector reading list</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Date</th>
+                      <th>Day</th>
+                      <th>Time</th>
+                      <th>Type</th>
+                    </tr>
+                  </thead>
+                  <tbody id="assignmentTableBody">
+                    <tr>
+                      <td colspan="5" class="empty-state-cell">No entries yet.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
 
     <script src="script.js"></script>
   </body>
