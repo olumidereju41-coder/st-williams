@@ -640,11 +640,28 @@ th {
 .hidden { display: none !important; }
 
 @media (max-width: 900px) {
-  .topbar, .hero-panel, .dashboard-header, .auth-panel, .admin-header {
+  .topbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .brand-wrap {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav {
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .hero-panel, .dashboard-header, .auth-panel, .admin-header {
     display: block;
   }
 
-  .nav { justify-content: flex-start; margin-top: 12px; }
   .readings-grid, .dashboard-grid, .auth-panel { grid-template-columns: 1fr; }
 }
 
@@ -655,5 +672,9 @@ th {
     padding-right: 16px;
   }
   .field-row.two-up { grid-template-columns: 1fr; }
+  .nav { gap: 8px; }
+  .nav-link, .admin-link { padding: 8px 12px; font-size: 0.92rem; }
   .hero-panel h2, .auth-copy h2, .dashboard-header h2, .admin-hero h2 { font-size: 2.5rem; }
+  .reader-list li { flex-wrap: wrap; }
+  .reader-list .pill { margin-left: auto; }
 }

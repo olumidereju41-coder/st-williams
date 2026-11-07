@@ -572,6 +572,12 @@ function initPublicApp() {
   updateAuthState();
   renderAssignments();
 
+  window.addEventListener('storage', (event) => {
+    if (event.key === STORAGE_KEYS.assignments) {
+      renderAssignments();
+    }
+  });
+
   if (isLoggedIn()) {
     showView('dashboard');
   } else {
@@ -602,6 +608,13 @@ function initSchedulePage() {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', logoutAdmin);
   }
+
+  window.addEventListener('storage', (event) => {
+    if (event.key === STORAGE_KEYS.assignments) {
+      renderScheduleRows();
+      renderAssignments();
+    }
+  });
 
   renderScheduleRows();
 }
