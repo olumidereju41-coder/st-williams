@@ -8,6 +8,18 @@ const STORAGE_KEYS = {
 const ADMIN_PASSWORD = 'church12';
 const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const SAMPLE_ASSIGNMENTS = [
+  { name: 'Mary Johnson', date: '2026-11-08', day: 'Sunday', time: '08:00', type: 'First Reading' },
+  { name: 'Joseph Martin', date: '2026-11-08', day: 'Sunday', time: '09:30', type: 'Responsorial Psalm' },
+  { name: 'Grace Okafor', date: '2026-11-08', day: 'Sunday', time: '10:00', type: 'Gospel' },
+  { name: 'Daniel Smith', date: '2026-11-09', day: 'Monday', time: '07:00', type: 'Lector Reading' },
+  { name: 'Alicia Brown', date: '2026-11-10', day: 'Tuesday', time: '06:30', type: 'First Reading' },
+  { name: 'Peter Akin', date: '2026-11-11', day: 'Wednesday', time: '18:00', type: 'Psalm' },
+  { name: 'Rosemary Nwosu', date: '2026-11-12', day: 'Thursday', time: '19:00', type: 'Lector Reading' },
+  { name: 'Samuel Mensah', date: '2026-11-13', day: 'Friday', time: '17:30', type: 'First Reading' },
+  { name: 'Faith Green', date: '2026-11-14', day: 'Saturday', time: '16:00', type: 'Psalm' },
+  { name: 'Thomas Reid', date: '2026-11-15', day: 'Sunday', time: '08:45', type: 'Gospel' }
+];
 
 const feastDays = {
   '01-01': 'Solemnity of Mary, Mother of God',
@@ -205,7 +217,12 @@ function handleLogin(event) {
 }
 
 function getAssignments() {
-  return readStorage(STORAGE_KEYS.assignments, []);
+  const stored = readStorage(STORAGE_KEYS.assignments, []);
+  if (!Array.isArray(stored) || stored.length === 0) {
+    saveStorage(STORAGE_KEYS.assignments, SAMPLE_ASSIGNMENTS);
+    return SAMPLE_ASSIGNMENTS;
+  }
+  return stored;
 }
 
 function saveAssignments(list) {
@@ -450,20 +467,56 @@ function renderScheduleRows() {
   const assignments = getAssignments().sort((a, b) => new Date(a.date) - new Date(b.date));
 
   if (!assignments.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-state-cell">No schedules added yet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state-cell">No schedules added yet.</td></tr>';
     if (summary) summary.textContent = '0 assignments';
     return;
   }
 
-  tbody.innerHTML = assignments.map((item) => `
+  tbody.innerHTML = assignments.map((item, index) => `
     <tr>
       <td>${item.name}</td>
       <td>${formatDate(item.date)}</td>
       <td>${item.day}</td>
       <td>${formatTime(item.time)}</td>
       <td>${item.type}</td>
+      <td>
+        <button type="button" class="admin-link-inline" data-edit-index="${index}">Edit</button>
+        <button type="button" class="admin-link-inline" data-delete-index="${index}" style="margin-left:8px;">Delete</button>
+      </td>
     </tr>
   `).join('');
+
+  document.querySelectorAll('[data-edit-index]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const index = Number(button.dataset.editIndex);
+      const assignment = getAssignments()[index];
+      if (!assignment) return;
+      const form = document.getElementById('scheduleForm');
+      if (!form) return;
+      document.getElementById('scheduleName').value = assignment.name;
+      document.getElementById('scheduleDate').value = assignment.date;
+      document.getElementById('scheduleDay').value = assignment.day;
+      document.getElementById('scheduleTime').value = assignment.time;
+      document.getElementById('scheduleType').value = assignment.type;
+      form.dataset.editIndex = String(index);
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.textContent = 'Update schedule';
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-delete-index]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const index = Number(button.dataset.deleteIndex);
+      const assignments = getAssignments();
+      assignments.splice(index, 1);
+      saveAssignments(assignments);
+      renderScheduleRows();
+      renderAssignments();
+      showToast('Schedule entry deleted.');
+    });
+  });
 
   if (summary) {
     summary.textContent = assignments.length === 1 ? '1 assignment' : `${assignments.length} assignments`;
@@ -485,11 +538,26 @@ function handleScheduleSubmit(event) {
   }
 
   const existing = getAssignments();
-  existing.push({ name, date, day, time, type });
+  const form = event.currentTarget;
+  const editIndex = form.dataset.editIndex;
+
+  if (editIndex !== undefined && editIndex !== '') {
+    existing[Number(editIndex)] = { name, date, day, time, type };
+    delete form.dataset.editIndex;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.textContent = 'Add to schedule';
+    }
+    showToast('Schedule updated successfully.');
+  } else {
+    existing.push({ name, date, day, time, type });
+    showToast('Schedule added successfully.');
+  }
+
   saveAssignments(existing);
   renderScheduleRows();
-  event.currentTarget.reset();
-  showToast('Schedule added successfully.');
+  renderAssignments();
+  form.reset();
 }
 
 function logoutAdmin() {
