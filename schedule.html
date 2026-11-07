@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>St Williams | Schedule Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="schedule">
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-mark">S</div>
+          <div>
+            <p class="brand-kicker">Schedule control</p>
+            <h1>St Williams</h1>
+          </div>
+        </div>
+        <nav class="nav">
+          <a href="index.html" class="nav-link">Public site</a>
+          <button id="logoutAdminBtn" class="nav-link danger" type="button">Logout</button>
+        </nav>
+      </header>
+
+      <main>
+        <div class="admin-header">
+          <div class="admin-hero">
+            <p class="eyebrow">Lector schedule</p>
+            <h2>Manage reading assignments</h2>
+          </div>
+          <div class="status-pill" id="scheduleSummary">0 assignments</div>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="dashboard-card">
+            <h3>Add schedule</h3>
+            <form id="scheduleForm" class="assignment-form">
+              <div class="field-group">
+                <label for="scheduleName">Name</label>
+                <input id="scheduleName" type="text" placeholder="Enter person name" required />
+              </div>
+
+              <div class="field-row two-up">
+                <div class="field-group">
+                  <label for="scheduleDate">Date</label>
+                  <input id="scheduleDate" type="date" required />
+                </div>
+                <div class="field-group">
+                  <label for="scheduleDay">Day</label>
+                  <input id="scheduleDay" type="text" placeholder="Sunday" required />
+                </div>
+              </div>
+
+              <div class="field-row two-up">
+                <div class="field-group">
+                  <label for="scheduleTime">Time</label>
+                  <input id="scheduleTime" type="time" required />
+                </div>
+                <div class="field-group">
+                  <label for="scheduleType">Reading type</label>
+                  <select id="scheduleType">
+                    <option value="First Reading">First Reading</option>
+                    <option value="Psalm">Psalm</option>
+                    <option value="Gospel">Gospel</option>
+                    <option value="Responsorial Psalm">Responsorial Psalm</option>
+                    <option value="Lector Reading">Lector Reading</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit">Add to schedule</button>
+            </form>
+          </section>
+
+          <section class="dashboard-card">
+            <h3>Current schedule</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Day</th>
+                    <th>Time</th>
+                    <th>Type</th>
+                  </tr>
+                </thead>
+                <tbody id="scheduleTableBody">
+                  <tr>
+                    <td colspan="5" class="empty-state-cell">No schedules added yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+    <script src="script.js"></script>
+  </body>
+</html>

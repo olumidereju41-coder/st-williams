@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>St Williams | Admin Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="admin-login">
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-mark">S</div>
+          <div>
+            <p class="brand-kicker">Admin access</p>
+            <h1>St Williams</h1>
+          </div>
+        </div>
+        <nav class="nav">
+          <a href="index.html" class="nav-link">Home</a>
+        </nav>
+      </header>
+
+      <main class="admin-shell">
+        <div class="admin-hero">
+          <p class="eyebrow">Protected portal</p>
+          <h2>Admin login</h2>
+        </div>
+
+        <form id="adminLoginForm" class="admin-form">
+          <div class="field-group">
+            <label for="adminPassword">Password</label>
+            <input id="adminPassword" type="password" maxlength="8" placeholder="Enter admin password" required />
+          </div>
+          <button type="submit">Enter schedule portal</button>
+        </form>
+
+        <p class="admin-note">Authorized administrator access only.</p>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+    <script src="script.js"></script>
+  </body>
+</html>

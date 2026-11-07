@@ -1,9 +1,11 @@
 const STORAGE_KEYS = {
   users: 'stwilliamsUsers',
   session: 'stwilliamsSession',
-  assignments: 'stwilliamsAssignments'
+  assignments: 'stwilliamsAssignments',
+  admin: 'stwilliamsAdminSession'
 };
 
+const ADMIN_PASSWORD = 'church12';
 const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -62,18 +64,39 @@ function showToast(message) {
   }, 2200);
 }
 
+function isLoggedIn() {
+  const session = readStorage(STORAGE_KEYS.session, null);
+  return Boolean(session && session.email);
+}
+
+function getCurrentSession() {
+  return readStorage(STORAGE_KEYS.session, null);
+}
+
+function setCurrentSession(user) {
+  saveStorage(STORAGE_KEYS.session, user);
+}
+
+function logout() {
+  localStorage.removeItem(STORAGE_KEYS.session);
+  updateAuthState();
+  showView('login');
+  showToast('You have been logged out.');
+}
+
 function showView(viewName) {
-  document.querySelectorAll('.view').forEach((section) => {
+  const sections = document.querySelectorAll('.view');
+  sections.forEach((section) => {
     section.classList.toggle('active', section.id === `${viewName}View`);
   });
 
-  document.querySelectorAll('.nav-link').forEach((button) => {
+  const navLinks = document.querySelectorAll('.nav-link[data-view]');
+  navLinks.forEach((button) => {
     button.classList.toggle('active', button.dataset.view === viewName);
   });
 
   if (viewName === 'dashboard' && !isLoggedIn()) {
     showView('login');
-    return;
   }
 }
 
@@ -97,26 +120,6 @@ function bindViewTriggers() {
   });
 }
 
-function isLoggedIn() {
-  const session = readStorage(STORAGE_KEYS.session, null);
-  return Boolean(session && session.email);
-}
-
-function getCurrentSession() {
-  return readStorage(STORAGE_KEYS.session, null);
-}
-
-function setCurrentSession(user) {
-  saveStorage(STORAGE_KEYS.session, user);
-}
-
-function logout() {
-  localStorage.removeItem(STORAGE_KEYS.session);
-  updateAuthState();
-  showView('login');
-  showToast('You have been logged out.');
-}
-
 function updateAuthState() {
   const session = getCurrentSession();
   const logoutBtn = document.getElementById('logoutBtn');
@@ -125,10 +128,6 @@ function updateAuthState() {
   if (logoutBtn) {
     logoutBtn.classList.toggle('hidden', !isLogged);
   }
-
-  document.querySelectorAll('.nav-link[data-view="dashboard"]').forEach((button) => {
-    button.classList.toggle('active', false);
-  });
 
   if (isLogged) {
     const name = session.name || 'Lector';
@@ -213,6 +212,19 @@ function saveAssignments(list) {
   saveStorage(STORAGE_KEYS.assignments, list);
 }
 
+function formatDate(value) {
+  const safeDate = new Date(`${value}T00:00:00`);
+  return safeDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatTime(value) {
+  if (!value) return '—';
+  const [hour, minute] = value.split(':');
+  const date = new Date();
+  date.setHours(Number(hour), Number(minute));
+  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
 function renderAssignments() {
   const assignments = getAssignments().sort((a, b) => new Date(a.date) - new Date(b.date));
   const readerList = document.getElementById('readerList');
@@ -232,92 +244,37 @@ function renderAssignments() {
     return;
   }
 
-  readerList.innerHTML = assignments
-    .map(
-      (item) => `
-        <li>
-          <span>${item.name}</span>
-          <span class="pill">${item.type}</span>
-        </li>
-      `
-    )
-    .join('');
+  readerList.innerHTML = assignments.map((item) => `
+    <li>
+      <span>${item.name}</span>
+      <span class="pill">${item.type}</span>
+    </li>
+  `).join('');
 
-  tableBody.innerHTML = assignments
-    .map(
-      (item) => `
-        <tr>
-          <td>${item.name}</td>
-          <td>${formatDate(item.date)}</td>
-          <td>${item.day}</td>
-          <td>${formatTime(item.time)}</td>
-          <td>${item.type}</td>
-        </tr>
-      `
-    )
-    .join('');
+  tableBody.innerHTML = assignments.map((item) => `
+    <tr>
+      <td>${item.name}</td>
+      <td>${formatDate(item.date)}</td>
+      <td>${item.day}</td>
+      <td>${formatTime(item.time)}</td>
+      <td>${item.type}</td>
+    </tr>
+  `).join('');
 
   if (statusText) {
-    const label = assignments.length === 1 ? '1 reader assigned' : `${assignments.length} readers assigned`;
-    statusText.textContent = label;
+    statusText.textContent = assignments.length === 1 ? '1 reader assigned' : `${assignments.length} readers assigned`;
   }
-}
-
-function formatDate(value) {
-  const safeDate = new Date(`${value}T00:00:00`);
-  return safeDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function formatTime(value) {
-  if (!value) {
-    return '—';
-  }
-  const [hour, minute] = value.split(':');
-  const date = new Date();
-  date.setHours(Number(hour), Number(minute));
-  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
-
-function handleAssignment(event) {
-  event.preventDefault();
-
-  if (!isLoggedIn()) {
-    showView('login');
-    showToast('Please login to add a reading assignment.');
-    return;
-  }
-
-  const name = document.getElementById('lectorName').value.trim();
-  const date = document.getElementById('assignmentDate').value;
-  const day = document.getElementById('assignmentDay').value.trim();
-  const time = document.getElementById('assignmentTime').value;
-  const type = document.getElementById('readingType').value;
-
-  if (!name || !date || !day || !time) {
-    showToast('Please complete all assignment fields.');
-    return;
-  }
-
-  const assignments = getAssignments();
-  assignments.push({ name, date, day, time, type });
-  saveAssignments(assignments);
-  renderAssignments();
-  event.currentTarget.reset();
-  showToast('Lector assignment added.');
 }
 
 function getLiturgicalInfo(date) {
-  const day = date.getDate();
   const month = String(date.getMonth() + 1).padStart(2, '0');
-  const key = `${month}-${String(day).padStart(2, '0')}`;
+  const day = String(date.getDate()).padStart(2, '0');
+  const key = `${month}-${day}`;
   const feast = feastDays[key] || 'Ordinary Time';
-  const sundayReading = getSundayReading(date);
-  const dailyReading = getDailyReading(date);
-
   return {
     celebration: feast,
-    daily: dailyReading,
-    sunday: sundayReading
+    daily: getDailyReading(date),
+    sunday: getSundayReading(date)
   };
 }
 
@@ -331,9 +288,7 @@ function getDailyReading(date) {
 }
 
 function getSundayReading(date) {
-  const day = date.getDay();
-
-  if (day !== 0) {
+  if (date.getDay() !== 0) {
     return 'Sunday readings are displayed for the selected Sunday date.';
   }
 
@@ -369,7 +324,7 @@ function renderCalendar(date) {
     calendarGrid.appendChild(blank);
   }
 
-  const selectedDate = document.getElementById('readingDate').value;
+  const selectedDate = document.getElementById('readingDate')?.value || '';
 
   for (let day = 1; day <= lastDay.getDate(); day += 1) {
     const cellDate = new Date(year, monthIndex, day);
@@ -380,8 +335,8 @@ function renderCalendar(date) {
 
     cell.className = `calendar-day ${isToday ? 'is-today' : ''}`;
     if (isSelected) {
-      cell.style.borderColor = 'rgba(122, 31, 45, 0.6)';
-      cell.style.background = 'rgba(122, 31, 45, 0.08)';
+      cell.style.borderColor = 'rgba(47,128,237,0.6)';
+      cell.style.background = 'rgba(47,128,237,0.08)';
     }
 
     const number = document.createElement('span');
@@ -396,7 +351,10 @@ function renderCalendar(date) {
     cell.appendChild(feast);
     cell.addEventListener('click', () => {
       const dateValue = getDateString(cellDate);
-      document.getElementById('readingDate').value = dateValue;
+      const input = document.getElementById('readingDate');
+      if (input) {
+        input.value = dateValue;
+      }
       updateReadingsForDate(cellDate);
     });
 
@@ -438,24 +396,17 @@ function initializeCurrentDate() {
 function wireUpForms() {
   const signupForm = document.getElementById('signupForm');
   const loginForm = document.getElementById('loginForm');
-  const assignmentForm = document.getElementById('assignmentForm');
   const viewReadingBtn = document.getElementById('viewReadingBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const dateInput = document.getElementById('readingDate');
 
-  if (signupForm) {
-    signupForm.addEventListener('submit', handleSignup);
-  }
-
-  if (loginForm) {
-    loginForm.addEventListener('submit', handleLogin);
-  }
-
-  if (assignmentForm) {
-    assignmentForm.addEventListener('submit', handleAssignment);
-  }
+  if (signupForm) signupForm.addEventListener('submit', handleSignup);
+  if (loginForm) loginForm.addEventListener('submit', handleLogin);
+  if (logoutBtn) logoutBtn.addEventListener('click', logout);
 
   if (viewReadingBtn) {
     viewReadingBtn.addEventListener('click', () => {
-      const value = document.getElementById('readingDate').value;
+      const value = document.getElementById('readingDate')?.value;
       if (!value) {
         showToast('Please select a date first.');
         return;
@@ -464,21 +415,89 @@ function wireUpForms() {
     });
   }
 
-  const dateInput = document.getElementById('readingDate');
   if (dateInput) {
     dateInput.addEventListener('change', (event) => {
-      const date = new Date(`${event.target.value}T12:00:00`);
-      updateReadingsForDate(date);
+      const selectedDate = event.target.value;
+      if (!selectedDate) return;
+      updateReadingsForDate(new Date(`${selectedDate}T12:00:00`));
     });
-  }
-
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', logout);
   }
 }
 
-function initApp() {
+function isAdminLoggedIn() {
+  return readStorage(STORAGE_KEYS.admin, false) === true;
+}
+
+function handleAdminLogin(event) {
+  event.preventDefault();
+  const input = document.getElementById('adminPassword');
+  const value = input ? input.value.trim() : '';
+
+  if (value === ADMIN_PASSWORD) {
+    saveStorage(STORAGE_KEYS.admin, true);
+    window.location.href = 'schedule.html';
+    return;
+  }
+
+  showToast('Incorrect admin password.');
+}
+
+function renderScheduleRows() {
+  const tbody = document.getElementById('scheduleTableBody');
+  const summary = document.getElementById('scheduleSummary');
+  if (!tbody) return;
+
+  const assignments = getAssignments().sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  if (!assignments.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state-cell">No schedules added yet.</td></tr>';
+    if (summary) summary.textContent = '0 assignments';
+    return;
+  }
+
+  tbody.innerHTML = assignments.map((item) => `
+    <tr>
+      <td>${item.name}</td>
+      <td>${formatDate(item.date)}</td>
+      <td>${item.day}</td>
+      <td>${formatTime(item.time)}</td>
+      <td>${item.type}</td>
+    </tr>
+  `).join('');
+
+  if (summary) {
+    summary.textContent = assignments.length === 1 ? '1 assignment' : `${assignments.length} assignments`;
+  }
+}
+
+function handleScheduleSubmit(event) {
+  event.preventDefault();
+
+  const name = document.getElementById('scheduleName').value.trim();
+  const date = document.getElementById('scheduleDate').value;
+  const day = document.getElementById('scheduleDay').value.trim();
+  const time = document.getElementById('scheduleTime').value;
+  const type = document.getElementById('scheduleType').value;
+
+  if (!name || !date || !day || !time) {
+    showToast('Please complete all schedule fields.');
+    return;
+  }
+
+  const existing = getAssignments();
+  existing.push({ name, date, day, time, type });
+  saveAssignments(existing);
+  renderScheduleRows();
+  event.currentTarget.reset();
+  showToast('Schedule added successfully.');
+}
+
+function logoutAdmin() {
+  localStorage.removeItem(STORAGE_KEYS.admin);
+  window.location.href = 'admin-login.html';
+}
+
+function initPublicApp() {
   bindViewTriggers();
   wireUpForms();
   initializeCurrentDate();
@@ -492,4 +511,45 @@ function initApp() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', initApp);
+function initAdminLogin() {
+  const form = document.getElementById('adminLoginForm');
+  if (form) {
+    form.addEventListener('submit', handleAdminLogin);
+  }
+}
+
+function initSchedulePage() {
+  if (!isAdminLoggedIn()) {
+    window.location.href = 'admin-login.html';
+    return;
+  }
+
+  const form = document.getElementById('scheduleForm');
+  const logoutBtn = document.getElementById('logoutAdminBtn');
+
+  if (form) {
+    form.addEventListener('submit', handleScheduleSubmit);
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', logoutAdmin);
+  }
+
+  renderScheduleRows();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const page = document.body.dataset.page;
+
+  if (page === 'admin-login') {
+    initAdminLogin();
+    return;
+  }
+
+  if (page === 'schedule') {
+    initSchedulePage();
+    return;
+  }
+
+  initPublicApp();
+});

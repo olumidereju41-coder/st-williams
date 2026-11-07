@@ -32,6 +32,7 @@
           <button class="nav-link" data-view="signup" type="button">Sign Up</button>
           <button class="nav-link" data-view="login" type="button">Login</button>
           <button class="nav-link" data-view="dashboard" type="button">Dashboard</button>
+          <a href="admin-login.html" class="nav-link">Admin Login</a>
           <button id="logoutBtn" class="nav-link danger hidden" type="button">Logout</button>
         </nav>
       </header>
@@ -170,42 +171,6 @@
                 <li class="empty-state">No readings added yet.</li>
               </ul>
 
-              <form id="assignmentForm" class="assignment-form">
-                <div class="field-group">
-                  <label for="lectorName">Name</label>
-                  <input id="lectorName" type="text" placeholder="Enter person name" required />
-                </div>
-
-                <div class="field-row two-up">
-                  <div class="field-group">
-                    <label for="assignmentDate">Date</label>
-                    <input id="assignmentDate" type="date" required />
-                  </div>
-                  <div class="field-group">
-                    <label for="assignmentDay">Day</label>
-                    <input id="assignmentDay" type="text" placeholder="Sunday" required />
-                  </div>
-                </div>
-
-                <div class="field-row two-up">
-                  <div class="field-group">
-                    <label for="assignmentTime">Time</label>
-                    <input id="assignmentTime" type="time" required />
-                  </div>
-                  <div class="field-group">
-                    <label for="readingType">Reading type</label>
-                    <select id="readingType">
-                      <option value="First Reading">First Reading</option>
-                      <option value="Psalm">Psalm</option>
-                      <option value="Gospel">Gospel</option>
-                      <option value="Responsorial Psalm">Responsorial Psalm</option>
-                      <option value="Lector Reading">Lector Reading</option>
-                    </select>
-                  </div>
-                </div>
-
-                <button type="submit">Add lector schedule</button>
-              </form>
             </div>
 
             <div class="dashboard-card">
